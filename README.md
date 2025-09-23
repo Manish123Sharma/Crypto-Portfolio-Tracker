@@ -40,14 +40,17 @@ The app uses **Hive** for local storage and the **CoinGecko API** for live data.
 
 2. **Install dependencies**
 
+      ```bash
      flutter pub get
 
 4. **Generate Hive adapters**
 
+      ```bash
      flutter packages pub run build_runner build
 
 6. **Run the app**
 
+      ```bash
      flutter run
 
 **🔑** **API Information**
