@@ -39,23 +39,29 @@ The app uses **Hive** for local storage and the **CoinGecko API** for live data.
    cd crypto_portfolio_tracker
 
 2. **Install dependencies**
-    flutter pub get
 
-3. **Generate Hive adapters**
-    flutter packages pub run build_runner build
+     flutter pub get
 
-4. **Run the app**
-    flutter run
+4. **Generate Hive adapters**
+
+     flutter packages pub run build_runner build
+
+6. **Run the app**
+
+     flutter run
 
 **🔑** **API Information**
 
 This project uses CoinGecko API.
-https://api.coingecko.com/api/v3/coins/list
+
+  https://api.coingecko.com/api/v3/coins/list
 
 1. Fetch coins list:
+
     https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd
 
 2. Fetch coin details/logo:
+
     https://api.coingecko.com/api/v3/coins/{id}
 
 **🗄️** **Hive Storage**
@@ -93,4 +99,7 @@ class PortfolioCoin extends HiveObject {
   });
 }
 
+## 🧑‍💻 Contributing
 
+Pull requests are welcome. For major changes, please open an issue first
+to discuss what you would like to change.
