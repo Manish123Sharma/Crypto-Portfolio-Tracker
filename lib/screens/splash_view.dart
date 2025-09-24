@@ -1,54 +1,62 @@
-import 'dart:async';
+import 'package:crypto_portfolio_tracker/screens/portfolio_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'portfolio_view.dart';
 
 class SplashView extends StatefulWidget {
-  const SplashView({super.key});
   @override
-  State<SplashView> createState() => _SplashViewState();
+  _SplashViewState createState() => _SplashViewState();
 }
 
-class _SplashViewState extends State<SplashView> with SingleTickerProviderStateMixin {
-  late AnimationController _anim;
-  late Animation<double> _fade;
+class _SplashViewState extends State<SplashView>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
-    _fade = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _anim, curve: Curves.easeIn));
-    _anim.forward();
 
-    Timer(const Duration(seconds: 2), () {
-      // Navigate to portfolio screen
-      Get.off(() => const PortfolioView());
+    _controller = AnimationController(
+      duration: Duration(seconds: 2),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+
+    _controller.forward();
+
+    // Navigate after animation completes
+    Future.delayed(Duration(seconds: 3), () {
+      Get.off(() => PortfolioView());
     });
   }
 
   @override
   void dispose() {
-    _anim.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FadeTransition(
-        opacity: _fade,
-        child: Container(
-          color: Colors.indigo,
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.account_balance_wallet, size: 90, color: Colors.white),
-                SizedBox(height: 16),
-                Text('Zyvo', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Text('Crypto Portfolio', style: TextStyle(color: Colors.white70)),
-              ],
+      backgroundColor: Colors.white,
+      body: Center(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Image.asset(
+              "assets/Logo.png",
+              width: 150,
+              height: 150,
             ),
           ),
         ),
