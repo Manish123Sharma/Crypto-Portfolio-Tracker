@@ -29,7 +29,7 @@ Built using **GetX** (state management, dependency injection, routing) and **Sha
 
 ## 📱 Screenshots
 
-    https://drive.google.com/drive/folders/1SrlfzkIDiKxrVvkZJJmQG6eEf4GmVtmS?usp=sharing
+https://drive.google.com/drive/folders/1SrlfzkIDiKxrVvkZJJmQG6eEf4GmVtmS?usp=sharing
 
 ## 📂 Project Structure
 
