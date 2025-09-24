@@ -1,38 +1,22 @@
+import 'package:crypto_portfolio_tracker/bindings/portfolio_binding.dart';
+import 'package:crypto_portfolio_tracker/screens/portfolio_view.dart';
+import 'package:crypto_portfolio_tracker/screens/splash_view.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'models/coin.dart';
-import 'storage/hive_manager.dart';
-import 'utils/image_cache.dart';
-import 'widgets/coin_list.dart';
+import 'package:get/get.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Hive
-  await Hive.initFlutter();
-  Hive.registerAdapter(CoinAdapter());
-
-  // Open storage boxes
-  await HiveManager.init();
-  await ImageCacheUtil.init();
-
-  runApp(const CoinTrackerApp());
+  runApp(MyApp());
 }
 
-class CoinTrackerApp extends StatelessWidget {
-  const CoinTrackerApp({super.key});
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Coin Tracker',
-      // theme: ThemeData(
-      //   primarySwatch: Colors.blue,
-      //   useMaterial3: true,
-      // ),
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const CoinList(),
+      title: 'Crypto Portfolio Tracker',
+      initialBinding: PortfolioBinding(),
+      home: SplashView(),
     );
   }
 }
