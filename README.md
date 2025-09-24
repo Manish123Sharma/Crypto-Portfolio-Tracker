@@ -108,7 +108,7 @@ This project uses CoinGecko API.
     
     ☁️ Cloud Sync (Firebase / Supabase)
 
-**👨‍💻** **Author**
+## **👨‍💻** **Author**
 
 Manish Kumar Sharma
 
@@ -120,10 +120,12 @@ Manish Kumar Sharma
 Pull requests are welcome. For major changes, please open an issue first
 to discuss what you would like to change.
 
+---
+
 ##  📜 License
 
 
----
+
 
 ✅ This README includes:
 - Features  
