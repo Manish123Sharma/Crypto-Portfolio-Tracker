@@ -1,42 +1,44 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/coin.dart';
-import '../storage/hive_manager.dart';
-import '../utils/image_cache.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://api.coingecko.com/api/v3';
+  static const baseUrl = 'https://api.coingecko.com/api/v3';
 
-  // For PortfolioController.fetchCoinsList()
-  static Future<List<Coin>> fetchCoinList() async {
-    final url = Uri.parse('$baseUrl/coins/markets?vs_currency=usd');
-    final response = await http.get(url);
-
+  static Future<List<Coin>> fetchCoinsList() async {
+    final response = await http.get(Uri.parse('$baseUrl/coins/list'));
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      List<Coin> coins = [];
-      for (var item in data) {
-        String id = item['id'];
-        String logoUrl = await ImageCacheUtil.getLogo(id);
-        coins.add(Coin.fromJson(item, logo: logoUrl));
-      }
-      await HiveManager.saveCoins(coins);
-      return coins;
+      List data = jsonDecode(response.body);
+      print(data);
+      return data.map((e) => Coin.fromJson(e)).toList();
     } else {
-      throw Exception('Failed to fetch coins');
+      throw Exception('Failed to load coins');
     }
   }
 
-  // For PortfolioController.fetchPricesForPortfolio()
+  static Future<List<Coin>> fetchCoinsWithImages() async {
+    final response = await http.get(Uri.parse(
+        '$baseUrl/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as List;
+      return data.map((e) => Coin.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to fetch coins with images');
+    }
+  }
+
+  /// Fetch current prices for selected coins
   static Future<Map<String, double>> fetchPrices(List<String> coinIds) async {
     if (coinIds.isEmpty) return {};
+
     final ids = coinIds.join(',');
-    final url = Uri.parse('$baseUrl/simple/price?ids=$ids&vs_currencies=usd');
-    final response = await http.get(url);
+    final response = await http.get(Uri.parse(
+        '$baseUrl/simple/price?ids=$ids&vs_currencies=usd'));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final prices = <String, double>{};
+      final Map<String, double> prices = {};
       data.forEach((key, value) {
         prices[key] = (value['usd'] as num).toDouble();
       });
@@ -46,24 +48,5 @@ class ApiService {
     }
   }
 
-  static Future<List<Coin>> fetchCoins() async {
-    final url = Uri.parse('$baseUrl/coins/markets?vs_currency=usd');
-    final response = await http.get(url);
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-
-      List<Coin> coins = [];
-      for (var item in data) {
-        String id = item['id'];
-        String logoUrl = await ImageCacheUtil.getLogo(id);
-        coins.add(Coin.fromJson(item, logo: logoUrl));
-      }
-
-      await HiveManager.saveCoins(coins);
-      return coins;
-    } else {
-      throw Exception('Failed to fetch coins');
-    }
-  }
 }
