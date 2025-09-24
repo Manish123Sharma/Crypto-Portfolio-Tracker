@@ -1,114 +1,258 @@
-import 'package:crypto_portfolio_tracker/screens/add_asset_sheet.dart';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import '../controllers/portfolio_controller.dart';
+// import '../utils/helper.dart';
+// import 'add_asset_view.dart';
+//
+// class PortfolioView extends StatefulWidget {
+//   const PortfolioView({super.key});
+//
+//   @override
+//   _PortfolioViewState createState() => _PortfolioViewState();
+// }
+//
+// class _PortfolioViewState extends State<PortfolioView> {
+//   final PortfolioController pc = Get.find();
+//
+//   Set<String> selectedAssets = {}; // store selected coin IDs
+//
+//   bool get isSelectionMode => selectedAssets.isNotEmpty;
+//
+//   void toggleSelection(String coinId) {
+//     setState(() {
+//       if (selectedAssets.contains(coinId)) {
+//         selectedAssets.remove(coinId);
+//       } else {
+//         selectedAssets.add(coinId);
+//       }
+//     });
+//   }
+//
+//   void deleteSelected() async {
+//     for (var id in selectedAssets) {
+//       final asset = pc.portfolio.firstWhere((a) => a.coin.id == id);
+//       await pc.removeAsset(asset);
+//     }
+//     setState(() {
+//       selectedAssets.clear();
+//     });
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: isSelectionMode
+//             ? Text('${selectedAssets.length} selected')
+//             : const Text('My Portfolio'),
+//         actions: [
+//           if (isSelectionMode)
+//             IconButton(
+//               icon: const Icon(Icons.delete),
+//               onPressed: deleteSelected,
+//             ),
+//         ],
+//       ),
+//       body: Obx(() {
+//         if (pc.isLoading.value) {
+//           return const Center(child: CircularProgressIndicator());
+//         }
+//
+//         return RefreshIndicator(
+//           onRefresh: () => pc.fetchPrices(),
+//           child: ListView.builder(
+//             itemCount: pc.portfolio.length + 1,
+//             itemBuilder: (context, index) {
+//               if (index == 0) {
+//                 return ListTile(
+//                   title: Text(
+//                     'Total: ${pc.totalValueFormatted.value}',
+//                     style: const TextStyle(
+//                       fontSize: 20,
+//                       fontWeight: FontWeight.bold,
+//                     ),
+//                   ),
+//                 );
+//               }
+//
+//               final asset = pc.portfolio[index - 1];
+//               final price = pc.prices[asset.coin.id] ?? 0.0;
+//               final isSelected = selectedAssets.contains(asset.coin.id);
+//
+//               return GestureDetector(
+//                 onLongPress: () => toggleSelection(asset.coin.id),
+//                 onTap: () {
+//                   if (isSelectionMode) toggleSelection(asset.coin.id);
+//                 },
+//                 child: Dismissible(
+//                   key: ValueKey(asset.coin.id),
+//                   onDismissed: (_) => pc.removeAsset(asset),
+//                   background: Container(
+//                     color: Colors.red,
+//                     alignment: Alignment.centerLeft,
+//                     padding: const EdgeInsets.symmetric(horizontal: 16),
+//                     child: const Icon(Icons.delete, color: Colors.white),
+//                   ),
+//                   child: Card(
+//                     color: isSelected ? Colors.blue.shade100 : null,
+//                     margin: const EdgeInsets.all(8),
+//                     child: ListTile(
+//                       title: Text(
+//                         '${Helpers.capitalize(asset.coin.name)} (${asset.coin.symbol.toUpperCase()})',
+//                         maxLines: 1,
+//                         overflow: TextOverflow.ellipsis,
+//                       ),
+//                       subtitle: Text(
+//                         'Quantity: ${asset.quantity}\nPrice: ${Helpers.formatCurrency(price)}',
+//                       ),
+//                       trailing: Text(
+//                         'Value: ${Helpers.formatCurrency(asset.quantity * price)}',
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+//               );
+//             },
+//           ),
+//         );
+//       }),
+//       floatingActionButton: FloatingActionButton(
+//         child: const Icon(Icons.add),
+//         onPressed: () => Get.to(() => const AddAssetView()),
+//       ),
+//     );
+//   }
+// }
+
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:crypto_portfolio_tracker/controllers/portfolio_controller.dart';
-import 'package:crypto_portfolio_tracker/utils/formatters.dart';
+import '../controllers/portfolio_controller.dart';
+import '../utils/helper.dart';
+import 'add_asset_view.dart';
 
 class PortfolioView extends StatefulWidget {
   const PortfolioView({super.key});
 
   @override
-  State<PortfolioView> createState() => _PortfolioViewState();
+  _PortfolioViewState createState() => _PortfolioViewState();
 }
 
 class _PortfolioViewState extends State<PortfolioView> {
-  final PortfolioController ctrl = Get.find<PortfolioController>();
-  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  final PortfolioController pc = Get.find();
 
-  late int _oldLength;
+  Set<String> selectedAssets = {}; // store selected coin IDs
 
-  @override
-  void initState() {
-    super.initState();
-    _oldLength = ctrl.assets.length;
+  bool get isSelectionMode => selectedAssets.isNotEmpty;
 
-    ever<List>(ctrl.assets, (newAssets) {
-      final newLength = newAssets.length;
-
-      if (newLength > _oldLength) {
-        _listKey.currentState?.insertItem(newLength - 1);
-      } else if (newLength < _oldLength) {
-        _listKey.currentState?.removeItem(
-          _oldLength - 1,
-          (context, animation) =>
-              _buildItem(ctrl.assets[_oldLength - 1], animation),
-        );
+  void toggleSelection(String coinId) {
+    setState(() {
+      if (selectedAssets.contains(coinId)) {
+        selectedAssets.remove(coinId);
+      } else {
+        selectedAssets.add(coinId);
       }
-
-      _oldLength = newLength; // update tracker
     });
   }
 
-  Widget _buildItem(dynamic a, Animation<double> animation) {
-    final price = ctrl.prices[a.coinId] ?? 0.0;
-    final total = a.quantity * price;
-
-    return SizeTransition(
-      sizeFactor: animation,
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: ListTile(
-          leading: a.logoUrl.isNotEmpty
-              ? Image.network(a.logoUrl, width: 32, height: 32)
-              : const Icon(Icons.monetization_on),
-          title: Text('${a.name} (${a.symbol.toUpperCase()})'),
-          subtitle: Text('Qty: ${a.quantity}'),
-          trailing: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                formatCurrency(price),
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 4),
-              Text(formatCurrency(total)),
-            ],
-          ),
-        ),
-      ),
-    );
+  void deleteSelected() async {
+    for (var id in selectedAssets) {
+      final asset = pc.portfolio.firstWhere((a) => a.coin.id == id);
+      await pc.removeAsset(asset);
+    }
+    setState(() {
+      selectedAssets.clear();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Portfolio'),
+        title: isSelectionMode
+            ? Text('${selectedAssets.length} selected')
+            : const Text('My Portfolio'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ctrl.fetchPricesForPortfolio(),
-          ),
+          if (isSelectionMode)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: deleteSelected,
+            ),
         ],
       ),
       body: Obx(() {
-        if (ctrl.isLoading.value || ctrl.coinsLoading.value) {
+        if (pc.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (ctrl.assets.isEmpty) {
-          return const Center(child: Text('No assets yet. Tap + to add.'));
-        }
+        return RefreshIndicator(
+          onRefresh: () => pc.fetchPrices(),
+          child: ListView.builder(
+            itemCount: pc.portfolio.length + 1,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return ListTile(
+                  title: Text(
+                    'Total: ${pc.totalValueFormatted.value}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              }
 
-        return AnimatedList(
-          key: _listKey,
-          initialItemCount: ctrl.assets.length,
-          itemBuilder: (context, index, animation) {
-            final a = ctrl.assets[index];
-            return _buildItem(a, animation);
-          },
+              final asset = pc.portfolio[index - 1];
+              final price = pc.prices[asset.coin.id] ?? 0.0;
+              final isSelected = selectedAssets.contains(asset.coin.id);
+
+              return GestureDetector(
+                onLongPress: () => toggleSelection(asset.coin.id),
+                onTap: () {
+                  if (isSelectionMode) toggleSelection(asset.coin.id);
+                },
+                child: Dismissible(
+                  key: ValueKey(asset.coin.id),
+                  onDismissed: (_) => pc.removeAsset(asset),
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  child: Card(
+                    color: isSelected ? Colors.blue.shade100 : null,
+                    margin: const EdgeInsets.all(8),
+                    child: ListTile(
+                      leading: isSelectionMode
+                          ? Checkbox(
+                        value: isSelected,
+                        onChanged: (_) => toggleSelection(asset.coin.id),
+                      )
+                          : null,
+                      title: Text(
+                        '${Helpers.capitalize(asset.coin.name)} (${asset.coin.symbol.toUpperCase()})',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        'Quantity: ${asset.quantity}\nPrice: ${Helpers.formatCurrency(price)}',
+                      ),
+                      trailing: Text(
+                        'Value: ${Helpers.formatCurrency(asset.quantity * price)}',
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         );
       }),
-      // floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      // floatingActionButton: FloatingActionButton(
-      //   backgroundColor: Colors.blue,
-      //   foregroundColor: Colors.white,
-      //   onPressed: () {
-      //     Get.to(() => const AddAssetView());
-      //   },
-      //   child: const Icon(Icons.add),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.add),
+        onPressed: () => Get.to(() => const AddAssetView()),
+      ),
     );
   }
 }

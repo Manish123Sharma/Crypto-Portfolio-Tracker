@@ -43,6 +43,7 @@ dependencies:
   hive_flutter: ^1.1.0
   path_provider: ^2.1.5
   build_runner: ^2.4.6
+  flutter_native_splash: ^2.4.6
 
 dev_dependencies:
   flutter_test:
@@ -65,9 +66,12 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/Logo.png
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+#   assets:
+#     - assets/Logo.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
@@ -96,3 +100,18 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_native_splash:
+  color: "#ffffff"
+#  image: assets/Logo.png
+  android: true
+  ios: true
+#  background_image: ""
+  image: "assets/Logo.png"
+#  branding: "assets/Logo.png"
+
+  android_gravity: center
+  ios_content_mode: center
+
+  android_12:
+    image: assets/Logo.png
+    icon_background_color: "#ffffff"
