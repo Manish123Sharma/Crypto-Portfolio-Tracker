@@ -27,6 +27,10 @@ Built using **GetX** (state management, dependency injection, routing) and **Sha
 - **CoinGecko API** (crypto data)
 ---
 
+## 📱 Screenshots
+
+    https://drive.google.com/drive/folders/1SrlfzkIDiKxrVvkZJJmQG6eEf4GmVtmS?usp=sharing
+
 ## 📂 Project Structure
 
     lib/
