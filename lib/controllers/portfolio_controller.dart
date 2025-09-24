@@ -1,212 +1,91 @@
-// import 'dart:async';
-// import 'package:get/get.dart';
-// import '../models/asset.dart';
-// import '../models/coin.dart';
-// import '../services//api_service.dart';
-// import '../services/storage_service.dart';
-// import 'package:flutter/foundation.dart';
-
-// class PortfolioController extends GetxController {
-//   // Observables
-//   final RxList<Asset> assets = <Asset>[].obs;
-//   final RxMap<String, double> prices = <String, double>{}.obs;
-//   final RxBool isLoading = false.obs;
-//   final RxBool coinsLoading = false.obs;
-//   final RxList<Coin> coins = <Coin>[].obs;
-
-//   Timer? _autoRefreshTimer;
-
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     // load portfolio from storage
-//     assets.assignAll(StorageService.loadPortfolio());
-//     // load cached coins list if any
-//     final cached = StorageService.loadCoins();
-//     if (cached.isNotEmpty) {
-//       coins.assignAll(cached);
-//     } else {
-//       // fetch once
-//       fetchCoinsList();
-//     }
-//     // fetch prices for current portfolio
-//     fetchPricesForPortfolio();
-//     // optional auto refresh every X minutes (configure carefully)
-//     // _startAutoRefresh(); // enable if desired
-//   }
-
-//   @override
-//   void onClose() {
-//     _autoRefreshTimer?.cancel();
-//     super.onClose();
-//   }
-
-//   Future<void> fetchCoinsList() async {
-//     coinsLoading.value = true;
-//     try {
-//       final list = await ApiService.fetchCoinList();
-//       coins.assignAll(list);
-//       await StorageService.saveCoins(list); // cache
-//     } catch (e) {
-//       // handle error (user may be offline)
-//       debugPrint('Error fetching coins: $e');
-//     } finally {
-//       coinsLoading.value = false;
-//     }
-//   }
-
-//   Future<void> fetchPricesForPortfolio() async {
-//     isLoading.value = true;
-//     try {
-//       final ids = assets.map((a) => a.coinId).toSet().toList();
-//       final Map<String, double> fresh = await ApiService.fetchPrices(ids);
-//       prices.assignAll(fresh);
-//     } catch (e) {
-//       debugPrint('Price fetch error: $e');
-//     } finally {
-//       isLoading.value = false;
-//     }
-//   }
-
-//   double get totalPortfolioValue {
-//     double sum = 0.0;
-//     for (final a in assets) {
-//       final p = prices[a.coinId] ?? 0.0;
-//       sum += a.quantity * p;
-//     }
-//     return sum;
-//   }
-
-//   // Add or update asset
-//   Future<void> addOrUpdateAsset(Asset asset) async {
-//     final idx = assets.indexWhere((a) => a.coinId == asset.coinId);
-//     if (idx >= 0) {
-//       assets[idx].quantity += asset.quantity;
-//       assets[idx] = assets[idx]; // trigger update
-//     } else {
-//       assets.add(asset);
-//     }
-//     await StorageService.savePortfolio(assets.toList());
-//     await fetchPricesForPortfolio();
-//   }
-
-//   Future<void> removeAsset(String coinId) async {
-//     assets.removeWhere((a) => a.coinId == coinId);
-//     await StorageService.savePortfolio(assets.toList());
-//     prices.remove(coinId);
-//   }
-
-//   // Search helper (fast-ish). We'll do a case-insensitive prefix search on name and symbol.
-//   List<Coin> searchCoins(String query, {int limit = 20}) {
-//     if (query.isEmpty) return [];
-//     final q = query.toLowerCase();
-//     final results = <Coin>[];
-//     for (final c in coins) {
-//       if (c.name.toLowerCase().startsWith(q) ||
-//           c.symbol.toLowerCase().startsWith(q)) {
-//         results.add(c);
-//         if (results.length >= limit) break;
-//       }
-//     }
-//     return results;
-//   }
-
-//   void _startAutoRefresh({int minutes = 5}) {
-//     _autoRefreshTimer?.cancel();
-//     _autoRefreshTimer = Timer.periodic(Duration(minutes: minutes), (_) {
-//       fetchPricesForPortfolio();
-//     });
-//   }
-// }
-
-
 import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:hive/hive.dart';
-import 'package:http/http.dart' as http;
-import '../models/coin.dart';
-import '../models/portfolio_asset.dart';
+import '../models/asset.dart';
+import '../services/storage_service.dart';
+import '../services/api_service.dart';
+import '../utils/helper.dart';
 
 class PortfolioController extends GetxController {
-  final assets = <PortfolioAsset>[].obs;
-  final prices = <String, double>{}.obs;
-
-  final allCoins = <Coin>[].obs; // ✅ used in AddAssetView
-  final isLoading = false.obs;
-  final coinsLoading = false.obs;
-
-  late Box<PortfolioAsset> assetBox;
-  late Box<Coin> coinBox;
+  var portfolio = <Asset>[].obs;
+  var prices = <String, double>{}.obs;
+  var totalValue = 0.0.obs;
+  var totalValueFormatted = ''.obs;
+  var isLoading = false.obs;
 
   @override
   void onInit() {
+    loadPortfolio();
     super.onInit();
-    _initHive();
   }
 
-  Future<void> _initHive() async {
-    assetBox = await Hive.openBox<PortfolioAsset>('assetsBox');
-    coinBox = await Hive.openBox<Coin>('coinsBox');
+  Future<void> loadPortfolio() async {
+    isLoading.value = true;
 
-    assets.assignAll(assetBox.values.toList());
-    allCoins.assignAll(coinBox.values.toList());
+    final saved = await StorageService.loadPortfolio();
+    portfolio.value = saved;
 
-    if (allCoins.isEmpty) {
-      fetchAllCoins();
+    if (portfolio.isNotEmpty) {
+      await fetchPrices();
+    } else {
+      totalValue.value = 0.0;
+      totalValueFormatted.value = Helpers.formatCurrency(0.0);
     }
+
+    isLoading.value = false;
   }
 
-  Future<void> fetchAllCoins() async {
-    try {
-      coinsLoading.value = true;
-      final res = await http.get(Uri.parse(
-          'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false'));
-      final data = jsonDecode(res.body) as List;
-      final coins = data.map((e) => Coin.fromJson(e, logo: e['image'])).toList();
+  Future<void> fetchPrices() async {
+    if (portfolio.isEmpty) return;
 
-      allCoins.assignAll(coins);
-
-      await coinBox.clear();
-      await coinBox.addAll(coins);
-    } finally {
-      coinsLoading.value = false;
-    }
-  }
-
-  Future<void> fetchPricesForPortfolio() async {
-    if (assets.isEmpty) return;
     try {
       isLoading.value = true;
-      final ids = assets.map((a) => a.coinId).join(',');
-      final res = await http.get(Uri.parse(
-          'https://api.coingecko.com/api/v3/simple/price?ids=$ids&vs_currencies=usd'));
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
 
-      data.forEach((id, val) {
-        prices[id] = (val['usd'] as num).toDouble();
+      final ids = portfolio.map((e) => e.coin.id).toList();
+      final data = await ApiService.fetchPrices(ids);
+
+      prices.clear();
+      prices.addAll(data);
+      data.forEach((key, value) {
+        prices[key] = value;
       });
+
+      calculateTotalValue();
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to fetch prices: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  void addAsset(Coin coin, double qty) {
-    final asset = PortfolioAsset(
-      coinId: coin.id,
-      name: coin.name,
-      symbol: coin.symbol,
-      logoUrl: coin.logoUrl,
-      quantity: qty,
-    );
-    assets.add(asset);
-    assetBox.add(asset);
+  void calculateTotalValue() {
+    double total = 0.0;
+
+    for (var asset in portfolio) {
+      final price = prices[asset.coin.id] ?? 0.0;
+      total += asset.quantity * price;
+    }
+
+    totalValue.value = total;
+    totalValueFormatted.value = Helpers.formatCurrency(total);
   }
 
-  void removeAsset(String coinId) {
-    final asset = assets.firstWhereOrNull((a) => a.coinId == coinId);
-    if (asset != null) {
-      assets.remove(asset);
-      assetBox.delete(asset.key);
+  Future<void> addAsset(Asset asset) async {
+    final existing =
+    portfolio.firstWhereOrNull((a) => a.coin.id == asset.coin.id);
+
+    if (existing != null) {
+      existing.quantity += asset.quantity;
+    } else {
+      portfolio.add(asset);
     }
+
+    await StorageService.savePortfolio(portfolio);
+    await fetchPrices(); // instantly fetch prices after adding
+  }
+
+  Future<void> removeAsset(Asset asset) async {
+    portfolio.remove(asset);
+    await StorageService.savePortfolio(portfolio);
+    await fetchPrices(); // instantly update prices and total
   }
 }
