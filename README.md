@@ -135,5 +135,4 @@ to discuss what you would like to change.
 - API reference  
 - Future improvements  
 
-Do you want me to also add **demo GIFs** (like splash animation and adding assets) in the README so it looks more impressive?
 
