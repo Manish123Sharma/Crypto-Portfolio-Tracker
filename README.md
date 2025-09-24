@@ -1,33 +1,57 @@
 # 📊 Crypto Portfolio Tracker
 
-A Flutter application that allows users to track their cryptocurrency portfolio in real-time.  
-Users can add cryptocurrencies they own, specify the quantity, and view the current market price, total value, and profit/loss.  
-The app uses **Hive** for local storage and the **CoinGecko API** for live data.
-
+A Flutter application to track your cryptocurrency portfolio.  
+Built using **GetX** (state management, dependency injection, routing) and **SharedPreferences** for local storage.
 ---
 
 ## 🚀 Features
 
-- Add / Remove cryptocurrencies from your portfolio.
-- Store holdings persistently with **Hive**.
-- Fetch real-time prices using **CoinGecko API**.
-- View:
-  - Current market price
-  - Quantity owned
-  - Total value
-  - Profit / Loss
-- Smooth UI with **AnimatedList** for insert/delete.
-- Crypto logos loaded and cached from CoinGecko.
-- Responsive design (works on both Android & iOS).
+- 📌 **Add / Remove Assets** to your portfolio
+- 💰 **Real-time Price Updates** using [CoinGecko API](https://www.coingecko.com/en/api)
+- 📈 **Auto-calculated Portfolio Value**
+- 🔄 **Swipe-to-Delete** single assets
+- ✅ **Multi-select Delete** (via long press + checkboxes)
+- 🎨 **Custom Splash Screen** with smooth zoom animation
+- ⚡ **GetX Architecture (MVC)** for clean and scalable code
+- 🗄 **Local persistence** with SharedPreferences (stores portfolio as JSON)
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Flutter** (Dart)
-- **Hive** (Local NoSQL storage)
-- **HTTP** (API requests)
-- **CoinGecko API** (Live market data)
+- **Flutter** (UI)
+- **GetX** (state management, DI, routing)
+- **Dart**
+- **SharedPreferences** (local storage)
+- **HTTP** (API calls)
+- **CoinGecko API** (crypto data)
+---
+
+## 📂 Project Structure
+
+    lib/
+    │
+    ├── bindings/
+    │ └── portfolio_binding.dart
+    │
+    ├── controllers/
+    │ ├── coin_controller.dart
+    │ └── portfolio_controller.dart
+    │
+    ├── models/
+    │ ├── coin.dart
+    │ └── portfolio_asset.dart
+    │
+    ├── screens/
+    │ ├── splash_view.dart
+    │ ├── portfolio_view.dart
+    │ └── add_asset_view.dart
+    │
+    ├── services/
+    │ └── storage_service.dart
+    │
+    └── utils/
+    └── helper.dart
 
 ---
 
@@ -66,43 +90,44 @@ This project uses CoinGecko API.
 2. Fetch coin details/logo:
 
     https://api.coingecko.com/api/v3/coins/{id}
+3. Fetch Prices:
 
-**🗄️** **Hive Storage**
+  https://api.coingecko.com/api/v3/simple/price?ids={coinIds}&vs_currencies=usd
 
-We use Hive for local persistence.
-Example adapter for storing portfolio coins:
+**🧩** **Future Improvements**
 
-@HiveType(typeId: 0)
-class PortfolioCoin extends HiveObject {
-  @HiveField(0)
-  String id;
+    🔔 Price Alerts & Notifications
+    
+    📊 Charts for Portfolio History
+    
+    🌙 Dark Mode
+    
+    ☁️ Cloud Sync (Firebase / Supabase)
 
-  @HiveField(1)
-  String symbol;
+**👨‍💻** **Author**
 
-  @HiveField(2)
-  String name;
+Manish Kumar Sharma
 
-  @HiveField(3)
-  double quantity;
+[📧 Email](mailto:your-mksharma256001@gmail.com) | [💼 LinkedIn](https://www.linkedin.com/in/mks001/) | [🌐 GitHub](https://github.com/Manish123Sharma)
 
-  @HiveField(4)
-  double priceUsd;
-
-  @HiveField(5)
-  String imageUrl;
-
-  PortfolioCoin({
-    required this.id,
-    required this.symbol,
-    required this.name,
-    required this.quantity,
-    required this.priceUsd,
-    required this.imageUrl,
-  });
-}
 
 ## 🧑‍💻 Contributing
 
 Pull requests are welcome. For major changes, please open an issue first
 to discuss what you would like to change.
+
+##  📜 License
+
+
+---
+
+✅ This README includes:
+- Features  
+- Tech stack  
+- Screenshots section (you can replace with your actual images later)  
+- Setup steps  
+- API reference  
+- Future improvements  
+
+Do you want me to also add **demo GIFs** (like splash animation and adding assets) in the README so it looks more impressive?
+
