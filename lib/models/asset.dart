@@ -1,27 +1,22 @@
+import 'coin.dart';
+
 class Asset {
-    final String coinId;
-    final String name;
-    final String symbol;
+    final Coin coin;
     double quantity;
 
-    Asset({
-        required this.coinId,
-        required this.name,
-        required this.symbol,
-        required this.quantity,
-    });
+    Asset({required this.coin, required this.quantity});
 
-    factory Asset.fromJson(Map<String, dynamic> j) => Asset(
-        coinId: j['coinId'],
-        name: j['name'],
-        symbol: j['symbol'],
-        quantity: (j['quantity'] as num).toDouble(),
-    );
+    factory Asset.fromJson(Map<String, dynamic> json) {
+        return Asset(
+            coin: Coin.fromJson(json['coin']),
+            quantity: json['quantity'],
+        );
+    }
 
-    Map<String, dynamic> toJson() => {
-        'coinId': coinId,
-        'name': name,
-        'symbol': symbol,
-        'quantity': quantity,
-    };
+    Map<String, dynamic> toJson() {
+        return {
+            'coin': coin.toJson(),
+            'quantity': quantity,
+        };
+    }
 }
